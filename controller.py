@@ -36,7 +36,6 @@ class Controller(object):
                            ['computeControl'], -1)
         self.computeControl = types.MethodType(_temp.computeControl, self)
         
-        #self.ser_lock = cport.lock
         self.stdout_lock = threading.RLock()
         
         # Make the pump driver as appropriate.
@@ -45,7 +44,7 @@ class Controller(object):
         # Data from config.ini
         self.logfiles = logfiles
         self.pparams = pparams
-        self.cparams = cparams # all controller parameters live here
+        self.cparams = cparams  # all controller parameters live here
         self.blank_filename = self.logfiles['blanklog']
         
         # Serial ports
@@ -116,8 +115,7 @@ class Controller(object):
         data = map(int, line.split())
         
         # Data line format: tx1 rx1 tx2 rx2 
-        #TODO: file can stay open in append mode if I can figure out 
-        #      how to guarentee they're allowed to be shared.
+        # TODO: file can stay open in append mode if I can figure out how to guarantee they're allowed to be shared.
         f = open(self.logfiles['odlog'], 'a')
         time_str = str(int(round(time())))
         str_data = map(str, data)
@@ -227,22 +225,19 @@ class Controller(object):
                   self.rx_blank, tx, rx)
         cont = map(self.computeControl, ods, self.z, range(8),
                    [time()-self.start_time]*len(self.z))
-        
-        #u = [q[0] for q in cont]
-        #self.z = [q[1] for q in cont]
+
         # Separate u lists from z
-        contT = zip(*cont) #transpose cont values [([u1,u2],z),([u1,u2],z),...]
-        u = array(contT[0]).transpose() #u=array([[u1,u1,u1,...],[u2,u2,u2,...]])
+        contT = zip(*cont)  # transpose cont values [([u1,u2],z),([u1,u2],z),...]
+        u = array(contT[0]).transpose()  # u=array([[u1,u1,u1,...],[u2,u2,u2,...]])
         self.z = contT[1]
-        
-        
+
         # Set excluded chambers to dilute at 11 units/chamber
         try:
-            exf = open('exclude.txt','r')
-            exvals = map(int,exf.readline().split())
+            exf = open('exclude.txt', 'r')
+            exvals = map(int, exf.readline().split())
             exf.close()
             for ee in exvals:
-                u[:,ee-1] = u[:,ee-1]+11
+                u[:, ee-1] = u[:, ee-1]+11
         except:
             pass
 
@@ -264,7 +259,7 @@ class Controller(object):
         # Handle dispensing.
         try:
             with self.serpt.lock:
-                self.serpt.write("sel0;") # Select media source
+                self.serpt.write("sel0;")  # Select media source
             print 'sel0;'
             sleep(0.5)
                 
@@ -276,42 +271,36 @@ class Controller(object):
                 self.pump.withdraw(amt_withdraw)
                 self.pump.waitForPumping()
             else:
-                #withdraw each volume sepparately so when we dispense sepparetly
+                # withdraw each volume separately so when we dispense separately
                 # the rounding errors cancel out
                 for amt_withdraw in u.transpose():
                     self.pump.withdraw(amt_withdraw)
                     self.pump.waitForPumping()
-                #withdraw some extra to take care of backlash
+                # withdraw some extra to take care of backlash
                 self.pump.withdraw(overdraw)
                 self.pump.waitForPumping()
 
             self.pump.dispense(overdraw)
             self.pump.waitForPumping()
 
-            # dispvals gets a tuple of dispense volumes for chamber_num
-            chamber_num = 1
-            for dispvals in u.transpose():
-                selstr = "sel%s;" % chamber_num
-                # If we're moving from PV1 to PV2 then close first
-                # to prevent leaks into tube 5; i.e. so no two are open at once
-                if chamber_num == 5:
-                    with self.serpt.lock:
-                        self.serpt.write("clo;")
-                    sleep(2)
+            # ALEX: randomise the order of dispensing
+            chambers = range(8)
+            random_chambers = random.shuffle(chambers)
+            for chamber_idx in random_chambers:
+                selstr = "sel%s;" % (chamber_idx+1)
                 with self.serpt.lock:
-                    self.serpt.write(selstr) #select chamber
-                print selstr #for debug
-                sleep(1.0)  #give PV time to move, SPV needs ~100ms, servo 1s
-                
-                print 'dispensing', dispvals, 'into chamber', chamber_num
-                self.pump.dispense(dispvals)
+                    self.serpt.write(selstr)  # select chamber
+                print selstr  # for debug
+                sleep(1.0)  # give PV time to move, SPV needs ~100ms, servo 1s
+
+                dispense_value = u[chamber_idx]
+
+                print 'dispensing', dispense_value, 'into chamber', (chamber_idx+1)
+                self.pump.dispense(dispense_value)
                 self.pump.waitForPumping()
-                
-                chamber_num = chamber_num + 1
-            
+
             with self.serpt.lock:
                 self.serpt.write("clo;")
-#                self.serpt.flush()
             print 'clo;'
                 
         except AttributeError, e:
@@ -320,5 +309,3 @@ class Controller(object):
             traceback.print_exc(file=sys.stdout)
         
         pass
-
-    
