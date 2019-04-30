@@ -9,7 +9,7 @@ import sys
 
 UPDATE_PERIOD = 5*60
 
-scp_cmd = 'C:\Program Files (x86)\PuTTY\pscp.exe'
+scp_cmd = 'C:\Program Files\PuTTY\pscp.exe'
 log_file = '..\log.dat'
 remote_file = 'soslab@homer:public_html/turbidostat/log.dat'
 
