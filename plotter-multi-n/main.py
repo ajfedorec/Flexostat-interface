@@ -25,12 +25,11 @@ class the_plotter_thread(threading.Thread):
             #make_plot()
             pr = subprocess.Popen([scp_cmd, log_file, remote_file])
             print 'uploading'
-            p=0
-            while (self.go and p<UPDATE_PERIOD):
-                p=p+1
+            p = 0
+            while self.go and p < UPDATE_PERIOD:
+                p = p + 1
                 time.sleep(1)
-        
-        
+
 
 def main():
     pt = the_plotter_thread()

@@ -54,14 +54,14 @@ class mytimer(threading.Thread):
         
     def run(self):
         while self.go:
-            next_time = self._myround(self._mytime()+self.p,self.p)
+            next_time = self._myround(self._mytime() + self.p, self.p)
             try:
                 self.cb()
             except:
                 traceback.print_exc(file=sys.stdout)
                 f = open('errors.log', 'a')
                 t = time()
-                f.write('===== time:' + str(t)+  '\n' )
+                f.write('===== time:' + str(t) + '\n')
                 traceback.print_exc(file=f)
                 f.close()
                 

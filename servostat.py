@@ -35,20 +35,20 @@ def Main():
                               timeout=4,
                               writeTimeout=1)
     cont_port.lock = threading.RLock()
-    if (port_names['pumpport'].upper()!='NONE'):
+    if port_names['pumpport'].upper() != 'NONE':
         pump_port = serial.Serial(port_names['pumpport'],
-                                  int(pump_params['baudrate']),timeout = 1,
-                                  writeTimeout = 1)
+                                  int(pump_params['baudrate']), timeout=1,
+                                  writeTimeout=1)
         pump_port.lock = threading.RLock()
     else:
         pump_port = None
     
-    # Make and start the controler
+    # Make and start the controller
     cont = Controller(controller_params, logs, pump_params,
                       cont_port, pump_port)
     cont.start()
     
-    # Setup network configue port
+    # Setup network config port
     def cb(cmd):
         if 'list' in cmd:
             return str(controller_params)
