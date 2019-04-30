@@ -1,5 +1,5 @@
 from flask import render_template
-from plotserver import app
+from plot_server import app
 from os import path
 
 
