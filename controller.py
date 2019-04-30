@@ -9,6 +9,7 @@ import sys
 import serial
 import traceback
 import types
+import random
 
 debug = False
 
@@ -285,15 +286,15 @@ class Controller(object):
 
             # ALEX: randomise the order of dispensing
             chambers = range(8)
-            random_chambers = random.shuffle(chambers)
-            for chamber_idx in random_chambers:
+            random.shuffle(chambers)
+            for chamber_idx in chambers:
                 selstr = "sel%s;" % (chamber_idx+1)
                 with self.serpt.lock:
                     self.serpt.write(selstr)  # select chamber
                 print selstr  # for debug
                 sleep(1.0)  # give PV time to move, SPV needs ~100ms, servo 1s
 
-                dispense_value = u[chamber_idx]
+                dispense_value = u.transpose()[chamber_idx]
 
                 print 'dispensing', dispense_value, 'into chamber', (chamber_idx+1)
                 self.pump.dispense(dispense_value)
